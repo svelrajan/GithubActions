@@ -1,4 +1,4 @@
-name: Test IoT Dashboard
+name: IoT Dashboard
 
 on:
   push:
