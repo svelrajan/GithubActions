@@ -1,0 +1,123 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IoT Telemetry Dashboard</title>
+
+  <!-- SheetJS for reading Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Chart.js for graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f4f6f8;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    #fileInput {
+      display: block;
+      margin: 20px auto;
+      padding: 12px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      width: 300px;
+    }
+    .chart-container {
+      width: 90%;
+      margin: 25px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>IoT Telemetry Dashboard</h1>
+  <p style="text-align:center;">
+    Upload your IoT telemetry Excel file (.xlsx) to visualize metrics.
+  </p>
+
+  <input type="file" id="fileInput" accept=".xlsx" />
+
+  <div id="charts"></div>
+
+  <script>
+    document.getElementById('fileInput').addEventListener('change', handleFile);
+
+    function handleFile(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet);
+
+        renderCharts(json);
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function renderCharts(data) {
+      document.getElementById("charts").innerHTML = "";
+
+      const labels = data.map(r => r.timestamp);
+      const cpu = data.map(r => r.cpu);
+      const network = data.map(r => r.network);
+      const memory = data.map(r => r.memory);
+      const disk = data.map(r => r.disk);
+
+      createChart("CPU Utilization (%)", labels, cpu, "red");
+      createChart("Network Throughput (Mbps)", labels, network, "blue");
+      createChart("Memory Usage (%)", labels, memory, "green");
+      createChart("Disk Usage (%)", labels, disk, "orange");
+    }
+
+    function createChart(title, labels, values, color) {
+      const container = document.createElement("div");
+      container.className = "chart-container";
+
+      const canvas = document.createElement("canvas");
+      container.appendChild(canvas);
+      document.getElementById("charts").appendChild(container);
+
+      new Chart(canvas, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label: title,
+            data: values,
+            borderColor: color,
+            borderWidth: 2,
+            tension: 0.2,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { display: true },
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
